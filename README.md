@@ -1,30 +1,25 @@
-# Eth Registrar
+# Puffs Registrar
 
-[![Build Status](https://travis-ci.com/ensdomains/ethregistrar.svg?branch=master)](https://travis-ci.com/ensdomains/ethregistrar) [![License](https://img.shields.io/badge/License-BSD--2--Clause-blue.svg)](LICENSE)
-
-Implements an [ENS](https://ens.domains/) registrar intended for the .eth TLD.
-
-These contracts were audited by ConsenSys dilligence; the audit report is available [here](https://github.com/ConsenSys/ens-audit-report-2019-02).
+Implements an ENS registrar intended for the .puffs TLD.
 
 ## Contracts
 
 The registrar is separated into several components for simplicity, modularity, and privilege minimisation.
 
-### [BaseRegistrar](https://github.com/ensdomains/ethregistrar/blob/master/contracts/BaseRegistrarImplementation.sol)
+### [BaseRegistrar](https://github.com/puffscoin/puffsregistrar/blob/master/contracts/BaseRegistrarImplementation.sol)
 
-BaseRegistrar is the contract that owns the TLD in the ENS registry. This contract implements a minimal set of functionality:
+BaseRegistrar is the contract that owns the TLD in the Puffscoin-NS registry. This contract implements a minimal set of functionality:
 
  - The owner of the registrar may add and remove controllers.
- - Controllers may register new domains and extend the expiry of (renew) existing domains. They can not change the ownership or reduce the expiration time of existing domains.
+ - Controllers may register new domains and extend the expiry of (i.e.:renew) existing domains. They can not change the ownership or reduce the expiration time of existing domains.
  - Name owners may transfer ownership to another address.
- - Name owners may reclaim ownership in the ENS registry if they have lost it.
- - Owners of names in the interim registrar may transfer them to the new registrar, during the 1 year transition period. When they do so, their deposit is returned to them in its entirety.
+ - Name owners may reclaim ownership of that name in the Puffscoin-ENS registry if they have lost it.
 
 This separation of concerns provides name owners strong guarantees over continued ownership of their existing names, while still permitting innovation and change in the way names are registered and renewed via the controller mechanism.
 
-### [EthRegistrarController](https://github.com/ensdomains/ethregistrar/blob/master/contracts/ETHRegistrarController.sol)
+### [PuffsRegistrarController](https://github.com/puffscoin/puffsregistrar/blob/master/contracts/PUFFSRegistrarController.sol)
 
-EthRegistrarController is the first implementation of a registration controller for the new registrar. This contract implements the following functionality:
+PuffsRegistrarController is the first implementation of a registration controller for the new registrar. This contract implements the following functionality:
 
  - The owner of the registrar may set a price oracle contract, which determines the cost of registrations and renewals based on the name and the desired registration or renewal duration.
  - The owner of the registrar may withdraw any collected funds to their account.
@@ -38,10 +33,10 @@ The commit/reveal process is used to avoid frontrunning, and operates as follows
 
 The minimum delay and expiry for commitments exist to prevent miners or other users from effectively frontrunnig registrations.
 
-### [SimplePriceOracle](https://github.com/ensdomains/ethregistrar/blob/master/contracts/SimplePriceOracle.sol)
+### [SimplePriceOracle](https://github.com/puffscoin/puffsregistrar/blob/master/contracts/SimplePriceOracle.sol)
 
-SimplePriceOracle is a trivial implementation of the pricing oracle for the EthRegistrarController that always returns a fixed price per domain per year, determined by the contract owner.
+SimplePriceOracle is a trivial implementation of the pricing oracle for the PuffsRegistrarController that always returns a fixed price per domain per year, determined by the contract owner.
 
-### [StablePriceOracle](https://github.com/ensdomains/ethregistrar/blob/master/contracts/StablePriceOracle.sol)
+### [StablePriceOracle](https://github.com/puffscoin/puffsregistrar/blob/master/contracts/StablePriceOracle.sol)
 
 StablePriceOracle is a price oracle implementation that allows the contract owner to specify pricing based on the length of a name, and uses a fiat currency oracle to set a fixed price in fiat per name.
