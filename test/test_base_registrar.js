@@ -3,7 +3,7 @@ const BaseRegistrar = artifacts.require('./BaseRegistrarImplementation');
 const HashRegistrar = artifacts.require('@ensdomains/ens/HashRegistrar');
 var Promise = require('bluebird');
 
-const namehash = require('eth-ens-namehash');
+const namehash = require('puffs-ens-namehash');
 const sha3 = require('web3-utils').sha3;
 const toBN = require('web3-utils').toBN;
 
@@ -57,21 +57,21 @@ contract('BaseRegistrar', function (accounts) {
 		await advanceTime(2 * DAYS + 1);
 		await Promise.map(hashes, (hash) => interimRegistrar.finalizeAuction(hash, {from: account}));
 		for(var name of names) {
-			assert.equal(await ens.owner(namehash.hash(name + '.eth')), account);
+			assert.equal(await ens.owner(namehash.hash(name + '.puffs')), account);
 		}
 	}
 
 	before(async () => {
 		ens = await ENS.new();
 
-		interimRegistrar = await HashRegistrar.new(ens.address, namehash.hash('eth'), 1493895600);
-		await ens.setSubnodeOwner('0x0', sha3('eth'), interimRegistrar.address);
+		interimRegistrar = await HashRegistrar.new(ens.address, namehash.hash('puffs'), 1493895600);
+		await ens.setSubnodeOwner('0x0', sha3('puffs'), interimRegistrar.address);
 		await registerOldNames(['name', 'name2'], registrantAccount);
 
-		const now = (await web3.eth.getBlock('latest')).timestamp;
-		registrar = await BaseRegistrar.new(ens.address, interimRegistrar.address, namehash.hash('eth'), now + 365 * DAYS, {from: ownerAccount});
+		const now = (await web3.puffs.getBlock('latest')).timestamp;
+		registrar = await BaseRegistrar.new(ens.address, interimRegistrar.address, namehash.hash('puffs'), now + 365 * DAYS, {from: ownerAccount});
 		await registrar.addController(controllerAccount, {from: ownerAccount});
-		await ens.setSubnodeOwner('0x0', sha3('eth'), registrar.address);
+		await ens.setSubnodeOwner('0x0', sha3('puffs'), registrar.address);
 	});
 
 	it('should report legacy names as unavailable during the migration period', async () => {
@@ -95,7 +95,7 @@ contract('BaseRegistrar', function (accounts) {
 	it('should allow transfers from the old registrar', async () => {
 		await advanceTime((await registrar.MIGRATION_LOCK_PERIOD()).toNumber());
 
-		var balanceBefore = await web3.eth.getBalance(registrantAccount);
+		var balanceBefore = await web3.puffs.getBalance(registrantAccount);
 		await interimRegistrar.transferRegistrars(sha3('name'), {gasPrice: 0, from: registrantAccount});
 		assert.equal(await registrar.ownerOf(sha3("name")), registrantAccount);
 		assert.equal((await (registrar.nameExpires(sha3("name")))).toNumber(), (await registrar.transferPeriodEnds()).toNumber());
@@ -103,8 +103,8 @@ contract('BaseRegistrar', function (accounts) {
 
 	it('should allow new registrations', async () => {
 		var tx = await registrar.register(sha3("newname"), registrantAccount, 86400, {from: controllerAccount});
-		var block = await web3.eth.getBlock(tx.receipt.blockHash);
-		assert.equal(await ens.owner(namehash.hash("newname.eth")), registrantAccount);
+		var block = await web3.puffs.getBlock(tx.receipt.blockHash);
+		assert.equal(await ens.owner(namehash.hash("newname.puffs")), registrantAccount);
 		assert.equal(await registrar.ownerOf(sha3("newname")), registrantAccount);
 		assert.equal((await registrar.nameExpires(sha3("newname"))).toNumber(), block.timestamp + 86400);
 	});
@@ -133,12 +133,12 @@ contract('BaseRegistrar', function (accounts) {
 	});
 
 	it('should permit the owner to reclaim a name', async () => {
-		await ens.setSubnodeOwner(ZERO_HASH, sha3("eth"), accounts[0]);
-		await ens.setSubnodeOwner(namehash.hash("eth"), sha3("newname"), ZERO_ADDRESS);
-		assert.equal(await ens.owner(namehash.hash("newname.eth")), ZERO_ADDRESS);
-		await ens.setSubnodeOwner(ZERO_HASH, sha3("eth"), registrar.address);
+		await ens.setSubnodeOwner(ZERO_HASH, sha3("puffs"), accounts[0]);
+		await ens.setSubnodeOwner(namehash.hash("puffs"), sha3("newname"), ZERO_ADDRESS);
+		assert.equal(await ens.owner(namehash.hash("newname.puffs")), ZERO_ADDRESS);
+		await ens.setSubnodeOwner(ZERO_HASH, sha3("puffs"), registrar.address);
 		await registrar.reclaim(sha3("newname"), registrantAccount, {from: registrantAccount});
-		assert.equal(await ens.owner(namehash.hash("newname.eth")), registrantAccount);
+		assert.equal(await ens.owner(namehash.hash("newname.puffs")), registrantAccount);
 	});
 
 	it('should prohibit anyone else from reclaiming a name', async () => {
@@ -149,7 +149,7 @@ contract('BaseRegistrar', function (accounts) {
 		await registrar.transferFrom(registrantAccount, otherAccount, sha3("newname"), {from: registrantAccount});
 		assert.equal((await registrar.ownerOf(sha3("newname"))), otherAccount);
 		// Transfer does not update ENS without a call to reclaim.
-		assert.equal(await ens.owner(namehash.hash("newname.eth")), registrantAccount);
+		assert.equal(await ens.owner(namehash.hash("newname.puffs")), registrantAccount);
 		await registrar.transferFrom(otherAccount, registrantAccount, sha3("newname"), {from: otherAccount});
 	});
 
@@ -159,7 +159,7 @@ contract('BaseRegistrar', function (accounts) {
 
 	it('should not permit transfer or reclaim during the grace period', async () => {
 		// Advance to the grace period
-		var ts = (await web3.eth.getBlock('latest')).timestamp;
+		var ts = (await web3.puffs.getBlock('latest')).timestamp;
 		await advanceTime((await registrar.nameExpires(sha3("newname"))).toNumber() - ts + 3600);
 
 		await expectFailure(registrar.transferFrom(registrantAccount, otherAccount, sha3("newname"), {from: registrantAccount}));
@@ -171,7 +171,7 @@ contract('BaseRegistrar', function (accounts) {
 	});
 
 	it('should allow registration of an expired domain', async () => {
-		var ts = (await web3.eth.getBlock('latest')).timestamp;
+		var ts = (await web3.puffs.getBlock('latest')).timestamp;
 		var expires = await registrar.nameExpires(sha3("newname"));
 		var grace = await registrar.GRACE_PERIOD();
 		await advanceTime(expires.toNumber() - ts + grace.toNumber() + 3600);
@@ -183,18 +183,18 @@ contract('BaseRegistrar', function (accounts) {
 	// END OF MIGRATION PERIOD
 
 	it('should show legacy names as available after the migration period', async () => {
-		var ts = (await web3.eth.getBlock('latest')).timestamp;
+		var ts = (await web3.puffs.getBlock('latest')).timestamp;
 		await advanceTime((await registrar.transferPeriodEnds()).toNumber() - ts + 3600);
 		assert.equal(await registrar.available(sha3('name2')), true);
 	});
 
 	it('should permit registration of legacy names after the migration period', async () => {
 		await registrar.register(sha3("name2"), accounts[1], 86400, {from: controllerAccount});
-		assert.equal(await ens.owner(namehash.hash("name2.eth")), accounts[1]);
+		assert.equal(await ens.owner(namehash.hash("name2.puffs")), accounts[1]);
 	});
 
 	it('should allow the owner to set a resolver address', async () => {
 		await registrar.setResolver(accounts[1], {from: ownerAccount});
-		assert.equal(await ens.resolver(namehash.hash('eth')), accounts[1]);
+		assert.equal(await ens.resolver(namehash.hash('puffs')), accounts[1]);
 	});
 });
