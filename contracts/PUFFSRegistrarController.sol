@@ -8,7 +8,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 /**
  * @dev A registrar controller for registering and renewing names at fixed cost.
  */
-contract ETHRegistrarController is Ownable {
+contract PUFFSRegistrarController is Ownable {
     using StringUtils for *;
 
     uint constant public MIN_REGISTRATION_DURATION = 28 days;
