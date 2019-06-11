@@ -20,7 +20,7 @@ contract BaseRegistrar is ERC721, Ownable {
     // The ENS registry
     ENS public ens;
 
-    // The namehash of the TLD this registrar owns (eg, .eth)
+    // The namehash of the TLD this registrar owns (eg, .puffs)
     bytes32 public baseNode;
 
     // The interim registrar
