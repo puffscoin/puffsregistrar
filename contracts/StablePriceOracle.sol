@@ -62,11 +62,11 @@ contract StablePriceOracle is Ownable, PriceOracle {
         require(len > 0);
         uint priceUSD = rentPrices[len - 1].mul(duration);
 
-        // Price of one ether in attodollars
-        uint ethPrice = uint(usdOracle.read());
+        // Price of one puffscoin in  USD (US dollars)
+        uint puffsPrice = uint(usdOracle.read());
 
-        // priceUSD and ethPrice are both fixed-point values with 18dp, so we
+        // priceUSD and puffsPrice are both fixed-point values with 18dp, so we
         // multiply the numerator by 1e18 before dividing.
-        return priceUSD.mul(1e18).div(ethPrice);
+        return priceUSD.mul(1e18).div(puffsPrice);
     }
 }
